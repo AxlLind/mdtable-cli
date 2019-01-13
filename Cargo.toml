@@ -5,3 +5,5 @@ authors = ["Axel Lindeberg <axel.ew.lindeberg@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+clap = "~2.32"
+text_io = "0.1.7"
