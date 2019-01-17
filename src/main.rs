@@ -8,40 +8,29 @@ use pad::PadStr;
 use std::io::stdout;
 use std::io::stdin;
 use std::io::Write;
+use std::iter;
 use std::cmp;
 use std::fs;
 
-#[derive(Debug)]
 struct Config {
   quiet: bool,
   minimize: bool,
-  file: String,
-  outfile: String,
-}
-
-#[derive(Debug)]
-struct Table {
-  rows: usize,
-  cols: usize,
-  data: Vec<Vec<String>>,
+  seperator: String,
+  file: Option<String>,
+  outfile: Option<String>,
 }
 
 fn config_from_args(args: ArgMatches) -> Config {
   Config {
-    quiet:    args.is_present("quiet"),
-    minimize: args.is_present("minimize"),
-    file: match args.value_of("infile") {
-      Some(f) => f.to_string(),
-      None => String::new(),
-    },
-    outfile: match args.value_of("outfile") {
-      Some(f) => f.to_string(),
-      None => String::new(),
-    },
+    quiet:     args.is_present("quiet"),
+    minimize:  args.is_present("minimize"),
+    seperator: args.value_of("seperator").unwrap().to_string(),
+    file:      args.value_of("infile").map(String::from),
+    outfile:   args.value_of("outfile").map(String::from),
   }
 }
 
-fn read_data_stdin(rows: usize, cols: usize) -> Vec<Vec<String>> {
+fn read_data_stdin(rows: usize, cols: usize, seperator: &String) -> Vec<Vec<String>> {
   let mut v = Vec::with_capacity(rows);
   let mut curr = 0;
   v.push(Vec::with_capacity(cols));
@@ -49,7 +38,7 @@ fn read_data_stdin(rows: usize, cols: usize) -> Vec<Vec<String>> {
     let mut s = String::new();
     stdin().read_line(&mut s).expect("Error reading a row");
     if s.trim().is_empty() { continue; }
-    for elem in s.split(",") {
+    for elem in s.split(seperator) {
       v[curr].push(elem.trim().to_string());
       if v[curr].len() == cols {
         if v.len() == rows+1 { return v; }
@@ -60,13 +49,13 @@ fn read_data_stdin(rows: usize, cols: usize) -> Vec<Vec<String>> {
   }
 }
 
-fn read_data_file(rows: usize, cols: usize, filename: &String) -> Vec<Vec<String>> {
+fn read_data_file(rows: usize, cols: usize, seperator: &String, filename: &String) -> Vec<Vec<String>> {
   let size = cols * (rows + 1);
   let s = fs::read_to_string(filename).expect("Error reading in file");
   let mut v = Vec::with_capacity(size);
-  let (mut added, mut curr) = (0,0);
+  let mut curr = 0;
   v.push(Vec::with_capacity(cols));
-  for elem in s.split(",").take(size) {
+  for elem in s.split(seperator).take(size) {
     v[curr].push(elem.trim().to_string());
     if v[curr].len() == cols {
       if v.len() == rows+1 { return v; }
@@ -74,65 +63,63 @@ fn read_data_file(rows: usize, cols: usize, filename: &String) -> Vec<Vec<String
       v.push(Vec::with_capacity(cols));
     }
   }
-  assert!(added == size, "File contained less than {} elements", size);
+  assert!(false, "File contained less than {} elements", size);
   v
 }
 
-fn format_minimize(t: &Table) -> String {
-  let mut s = String::new();
-  s.push_str(&t.data[0][0]);
-  // header
-  for elem in t.data[0].iter().skip(1) {
-    s.push('|');
-    s.push_str(&elem);
-  }
-  // seperation row
-  s.push_str("\n---");
-  s.push_str(&"|---".repeat(t.cols-1));
-  // all data rows
-  for row in t.data.iter().skip(1) {
-    s.push('\n');
-    s.push_str(&row[0]);
-    for elem in row.iter().skip(1) {
-      s.push('|');
-      s.push_str(elem);
-    }
-  }
-  s
+fn format_minimize(cols: usize, rows: Vec<Vec<String>>) -> String {
+  vec![
+    // header
+    rows[0].join("|"),
+    // seperation row
+    iter::repeat("---")
+      .take(cols)
+      .collect::<Vec<_>>()
+      .join("|"),
+    // all data rows
+    rows.iter()
+      .skip(1)
+      .map(|row| row.join("|"))
+      .collect::<Vec<_>>()
+      .join("\n"),
+  ].join("\n") + "\n"
 }
 
-fn format_pretty(t: &Table) -> String {
-  let mut lengths = Vec::with_capacity(t.cols);
-  for _ in 0..t.cols { lengths.push(1); }
-  for row in &t.data {
-    for (i, elem) in row.iter().enumerate() {
-      lengths[i] = cmp::max(elem.len(), lengths[i]);
-    }
+fn format_pretty(cols: usize, rows: Vec<Vec<String>>) -> String {
+  let mut lengths = vec![1; cols];
+  for row in &rows {
+    lengths = row.iter()
+      .zip(&lengths)
+      .map(|(e,len)| cmp::max(e.len(), *len))
+      .collect();
   }
-  let mut row_length = 1;
-  for len in &lengths { row_length += len + 3; }
-  let mut s = String::with_capacity(row_length * (t.data.len()+1));
+  let row_length : usize = 1 + lengths.iter().fold(0, |s,l| s+l+3);
+  let mut s = String::with_capacity(row_length * (rows.len() + 1));
   // header
-  for (i, elem) in t.data[0].iter().enumerate() {
-    s.push_str("| ");
-    s.push_str(&elem.pad_to_width(lengths[i]+1));
-  }
-  s.push_str("|\n");
+  s.push_str(&format!("| {} |\n", &rows[0].iter()
+    .zip(&lengths)
+    .map(|(e, len)| e.pad_to_width(*len))
+    .collect::<Vec<_>>()
+    .join(" | ")
+  ));
   // seperation row
-  for i in 0..t.cols {
-    s.push_str("|-");
-    s.push_str(&"".pad_to_width_with_char(lengths[i]+1, '-'));
-  }
-  s.push('|');
+  s.push_str(&format!("|-{}-|\n", &lengths.iter()
+    .map(|len| "-".repeat(*len))
+    .collect::<Vec<_>>()
+    .join("-|-")
+  ));
   // all data rows
-  for row in t.data.iter().skip(1) {
-    s.push_str("\n| ");
-    for (i, elem) in row.iter().enumerate() {
-      s.push_str(&elem.pad_to_width(lengths[i]+1));
-      s.push_str("| ");
-    }
-  }
-  s.push('\n');
+  s.push_str(&format!("| {} |\n", &rows.iter()
+    .skip(1)
+    .map(|row| row.iter()
+      .zip(&lengths)
+      .map(|(e, len)| e.pad_to_width(*len))
+      .collect::<Vec<_>>()
+      .join(" | ")
+    )
+    .collect::<Vec<_>>()
+    .join(" |\n| ")
+  ));
   s
 }
 
@@ -143,7 +130,7 @@ fn main() {
       .author("Axel Lindeberg")
       .about("Makes creating tables in markdown easier!")
       .arg(Arg::with_name("quiet")
-        .help("Supresses program instructions")
+        .help("Supresses program instructions.")
         .long("quiet")
         .short("q")
       )
@@ -153,16 +140,22 @@ fn main() {
         .short("m")
       )
       .arg(Arg::with_name("infile")
-        .help("Reads table values from this file")
+        .help("Reads table values from this file if given, stdin otherwise.")
         .long("file")
         .short("f")
         .takes_value(true)
       )
       .arg(Arg::with_name("outfile")
-        .help("Prints output to this if specified, stdout otherwise")
+        .help("Prints output to this if given, stdout otherwise.")
         .long("out")
         .short("o")
         .takes_value(true)
+      )
+      .arg(Arg::with_name("seperator")
+        .help("String that seperates values.")
+        .long("seperator")
+        .short("s")
+        .default_value(",")
       )
       .get_matches()
   );
@@ -174,21 +167,16 @@ fn main() {
   let (rows, cols) = ( read!(), read!() );
   assert!(rows > 0, "Need at least one row (got {})", rows);
   assert!(cols > 1, "Need at least 2 columns (got {})", cols);
-  let table = Table {
-    rows: rows,
-    cols: cols,
-    data: match args.file.is_empty() {
-      true  => read_data_stdin(rows, cols),
-      false => read_data_file(rows, cols, &args.file),
-    },
+  let data = match args.file {
+    None => read_data_stdin(rows, cols, &args.seperator),
+    Some(file) => read_data_file(rows, cols, &args.seperator, &file),
   };
-  println!("{:?}", table);
   let s = match args.minimize {
-    true  => format_minimize(&table),
-    false => format_pretty(&table),
+    true  => format_minimize(cols, data),
+    false => format_pretty(cols, data),
   };
-  match args.outfile.is_empty() {
-    true  => print!("\n{}", s),
-    false => fs::write(args.outfile, s).expect("Error writing to file"),
+  match args.outfile {
+    None => print!("{}", s),
+    Some(file) => fs::write(file, s).expect("Error writing to file"),
   };
 }
