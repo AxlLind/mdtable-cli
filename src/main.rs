@@ -3,19 +3,19 @@ extern crate text_io;
 extern crate clap;
 extern crate pad;
 
+use std::io;
+use std::fs;
+use std::iter;
+use std::io::Write;
+use std::cmp::max;
+
 use clap::{App, Arg, ArgMatches};
 use pad::PadStr;
-use std::io::stdout;
-use std::io::stdin;
-use std::io::Write;
-use std::iter;
-use std::cmp;
-use std::fs;
 
 struct Config {
   quiet: bool,
   minimize: bool,
-  seperator: String,
+  separator: String,
   file: Option<String>,
   outfile: Option<String>,
 }
@@ -24,24 +24,24 @@ fn config_from_args(args: ArgMatches) -> Config {
   Config {
     quiet:     args.is_present("quiet"),
     minimize:  args.is_present("minimize"),
-    seperator: args.value_of("seperator").unwrap().to_string(),
+    separator: args.value_of("separator").unwrap().to_string(),
     file:      args.value_of("infile").map(String::from),
     outfile:   args.value_of("outfile").map(String::from),
   }
 }
 
-fn read_data_stdin(rows: usize, cols: usize, seperator: &String) -> Vec<Vec<String>> {
-  let mut v = Vec::with_capacity(rows);
+fn read_data_stdin(rows: usize, cols: usize, separator: &String) -> io::Result< Vec<Vec<String>> > {
+  let mut v = Vec::with_capacity(rows+1);
   let mut curr = 0;
   v.push(Vec::with_capacity(cols));
   loop {
     let mut s = String::new();
-    stdin().read_line(&mut s).expect("Error reading a row");
+    io::stdin().read_line(&mut s)?;
     if s.trim().is_empty() { continue; }
-    for elem in s.split(seperator) {
+    for elem in s.split(separator) {
       v[curr].push(elem.trim().to_string());
       if v[curr].len() == cols {
-        if v.len() == rows+1 { return v; }
+        if v.len() == rows+1 { return Ok(v); }
         curr += 1;
         v.push(Vec::with_capacity(cols));
       }
@@ -49,40 +49,39 @@ fn read_data_stdin(rows: usize, cols: usize, seperator: &String) -> Vec<Vec<Stri
   }
 }
 
-fn read_data_file(rows: usize, cols: usize, seperator: &String, filename: &String) -> Vec<Vec<String>> {
+fn read_data_file(rows: usize, cols: usize, separator: &String, filename: &String) -> io::Result< Vec<Vec<String>> > {
   let size = cols * (rows + 1);
-  let s = fs::read_to_string(filename).expect("Error reading in file");
   let mut v = Vec::with_capacity(size);
   let mut curr = 0;
+  let s = fs::read_to_string(filename)?;
   v.push(Vec::with_capacity(cols));
-  for elem in s.split(seperator).take(size) {
+  for elem in s.split(separator).take(size) {
     v[curr].push(elem.trim().to_string());
     if v[curr].len() == cols {
-      if v.len() == rows+1 { return v; }
+      if v.len() == rows+1 { return Ok(v); }
       curr += 1;
       v.push(Vec::with_capacity(cols));
     }
   }
   assert!(false, "File contained less than {} elements", size);
-  v
+  Ok(v)
 }
 
 fn format_minimize(cols: usize, rows: Vec<Vec<String>>) -> String {
   vec![
     // header
     rows[0].join("|"),
-    // seperation row
+    // separation row
     iter::repeat("---")
       .take(cols)
       .collect::<Vec<_>>()
       .join("|"),
     // all data rows
-    rows.iter()
-      .skip(1)
+    rows[1..].iter()
       .map(|row| row.join("|"))
       .collect::<Vec<_>>()
       .join("\n"),
-  ].join("\n") + "\n"
+  ].join("\n")
 }
 
 fn format_pretty(cols: usize, rows: Vec<Vec<String>>) -> String {
@@ -90,41 +89,39 @@ fn format_pretty(cols: usize, rows: Vec<Vec<String>>) -> String {
   for row in &rows {
     lengths = row.iter()
       .zip(&lengths)
-      .map(|(e,len)| cmp::max(e.len(), *len))
+      .map(|(e,len)| max(e.len(), *len))
       .collect();
   }
-  let row_length : usize = 1 + lengths.iter().fold(0, |s,l| s+l+3);
-  let mut s = String::with_capacity(row_length * (rows.len() + 1));
-  // header
-  s.push_str(&format!("| {} |\n", &rows[0].iter()
-    .zip(&lengths)
-    .map(|(e, len)| e.pad_to_width(*len))
-    .collect::<Vec<_>>()
-    .join(" | ")
-  ));
-  // seperation row
-  s.push_str(&format!("|-{}-|\n", &lengths.iter()
-    .map(|len| "-".repeat(*len))
-    .collect::<Vec<_>>()
-    .join("-|-")
-  ));
-  // all data rows
-  s.push_str(&format!("| {} |\n", &rows.iter()
-    .skip(1)
-    .map(|row| row.iter()
+  vec![
+    // header
+    format!("| {} |", &rows[0].iter()
       .zip(&lengths)
       .map(|(e, len)| e.pad_to_width(*len))
       .collect::<Vec<_>>()
-      .join(" | ")
-    )
-    .collect::<Vec<_>>()
-    .join(" |\n| ")
-  ));
-  s
+      .join(" | ")
+    ),
+    // separation row
+    format!("|-{}-|", &lengths.iter()
+      .map(|len| "-".repeat(*len))
+      .collect::<Vec<_>>()
+      .join("-|-")
+    ),
+    // all data rows
+    format!("| {} |", &rows[1..].iter()
+      .map(|row| row.iter()
+        .zip(&lengths)
+        .map(|(e, len)| e.pad_to_width(*len))
+        .collect::<Vec<_>>()
+        .join(" | ")
+      )
+      .collect::<Vec<_>>()
+      .join(" |\n| ")
+    ),
+  ].join("\n")
 }
 
-fn main() {
-  let args = config_from_args(
+fn main() -> io::Result<()> {
+  let config = config_from_args(
     App::new("mdtable")
       .version("0.01")
       .author("Axel Lindeberg")
@@ -151,32 +148,39 @@ fn main() {
         .short("o")
         .takes_value(true)
       )
-      .arg(Arg::with_name("seperator")
-        .help("String that seperates values.")
-        .long("seperator")
+      .arg(Arg::with_name("separator")
+        .help("String that separates values.")
+        .long("separator")
         .short("s")
         .default_value(",")
       )
       .get_matches()
   );
 
-  if !args.quiet {
-    print!("Number of rows and columns: ");
-    stdout().flush().expect("Error flushing stdout");
+  if !config.quiet {
+    eprint!("Number of rows (not including header) and columns: ");
+    io::stdout().flush()?;
   }
   let (rows, cols) = ( read!(), read!() );
   assert!(rows > 0, "Need at least one row (got {})", rows);
   assert!(cols > 1, "Need at least 2 columns (got {})", cols);
-  let data = match args.file {
-    None => read_data_stdin(rows, cols, &args.seperator),
-    Some(file) => read_data_file(rows, cols, &args.seperator, &file),
+  if !config.quiet {
+    eprint!("Enter {} values separated by '{}' and/or line breaks:\n",
+      (rows+1)*cols,
+      &config.separator
+    );
+  }
+  let data = match config.file {
+    None => read_data_stdin(rows, cols, &config.separator)?,
+    Some(f) => read_data_file(rows, cols, &config.separator, &f)?,
   };
-  let s = match args.minimize {
+  let table = match config.minimize {
     true  => format_minimize(cols, data),
     false => format_pretty(cols, data),
   };
-  match args.outfile {
-    None => print!("{}", s),
-    Some(file) => fs::write(file, s).expect("Error writing to file"),
+  match config.outfile {
+    None => println!("{}", table),
+    Some(f) => fs::write(f, table + "\n")?,
   };
+  Ok(())
 }
