@@ -29,6 +29,23 @@ fn config_from_args(args: ArgMatches) -> Config {
   }
 }
 
+fn read_table_size(config: &Config) -> io::Result<(usize, usize)> {
+  if !config.quiet {
+    eprint!("Number of rows (not including header) and columns: ");
+    io::stdout().flush()?;
+  }
+  let (rows, cols) = ( read!(), read!() );
+  assert!(rows > 0, "Need at least one row (got {})", rows);
+  assert!(cols > 1, "Need at least 2 columns (got {})", cols);
+  if !config.quiet {
+    eprintln!("Enter {} values separated by '{}' and/or line breaks.",
+      cols*(rows+1),
+      &config.separator,
+    );
+  }
+  Ok((rows, cols))
+}
+
 fn read_data_stdin(rows: usize, cols: usize, separator: &String) -> io::Result< Vec<Vec<String>> > {
   let mut curr = 0;
   let mut v = vec![Vec::with_capacity(cols); rows+1];
@@ -143,19 +160,7 @@ fn main() -> io::Result<()> {
       .get_matches()
   );
 
-  if !config.quiet {
-    eprint!("Number of rows (not including header) and columns: ");
-    io::stdout().flush()?;
-  }
-  let (rows, cols) = ( read!(), read!() );
-  assert!(rows > 0, "Need at least one row (got {})", rows);
-  assert!(cols > 1, "Need at least 2 columns (got {})", cols);
-  if !config.quiet {
-    eprintln!("Enter {} values separated by '{}' and/or line breaks.",
-      cols*(rows+1),
-      &config.separator,
-    );
-  }
+  let (rows, cols) = read_table_size(&config)?;
   let data = match config.file {
     None    => read_data_stdin(rows, cols, &config.separator)?,
     Some(f) => read_data_file(rows, cols, &config.separator, &f)?,

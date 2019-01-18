@@ -11,6 +11,8 @@ The application first expects two numbers: the numbers of rows (not including th
 
 This can either come from a file with the `-f` flag or from stdin.
 
+See examples of input and output [here](./examples.md)
+
 # Installation
 [Coming]
 
