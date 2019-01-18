@@ -1,5 +1,7 @@
+
+---
 # Examples
-#### In
+### In
 ```
 2 2
 Time, Temp
@@ -7,20 +9,42 @@ Time, Temp
 14:43, -1°
 ```
 
-#### Out
+### Out
 | Time  | Temp |
 |-------|------|
 | 14:22 | 0°   |
 | 14:43 | -1°  |
 
-#### In
+---
+
+### In
 ```
 2 3
 Test, data, please, this, can, be, on, one, line
 ```
 
-#### Out
+### Out
 | Test | data | please |
 |------|------|--------|
 | this | can  | be     |
 | on   | one  | line   |
+
+---
+
+### In
+```
+2 3
+Here, is
+header
+Can
+also
+be
+on, different
+lines
+```
+
+### Out
+| Here | is        | header |
+|------|-----------|--------|
+| Can  | also      | be     |
+| on   | different | lines  |
