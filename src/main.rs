@@ -31,10 +31,9 @@ fn config_from_args(args: ArgMatches) -> Config {
 }
 
 fn read_data_stdin(rows: usize, cols: usize, separator: &String) -> io::Result< Vec<Vec<String>> > {
-  let mut v = vec![Vec::with_capacity(cols); rows+1];
   let mut curr = 0;
-  let stdin = io::stdin();
-  for s in stdin.lock().lines() {
+  let mut v = vec![Vec::with_capacity(cols); rows+1];
+  for s in io::stdin().lock().lines() {
     let line = s?;
     if line.trim().is_empty() { continue; }
     for elem in line.split(separator) {
@@ -48,12 +47,11 @@ fn read_data_stdin(rows: usize, cols: usize, separator: &String) -> io::Result< 
   Ok(v)
 }
 
-fn read_data_file(rows: usize, cols: usize, separator: &String, filename: &String) -> io::Result< Vec<Vec<String>> > {
+fn read_data_file(rows: usize, cols: usize, separator: &String, file: &String) -> io::Result< Vec<Vec<String>> > {
   let size = cols * (rows + 1);
-  let mut v = vec![Vec::with_capacity(cols); rows+1];
   let mut curr = 0;
-  let file = File::open(filename)?;
-  for s in BufReader::new(file).lines() {
+  let mut v = vec![Vec::with_capacity(cols); rows+1];
+  for s in BufReader::new(File::open(file)?).lines() {
     let line = s?;
     if line.trim().is_empty() { continue; }
     for elem in line.split(separator) {
@@ -69,7 +67,7 @@ fn read_data_file(rows: usize, cols: usize, separator: &String, filename: &Strin
 }
 
 fn format_minimize(cols: usize, rows: &Vec<Vec<String>>) -> String {
-  vec![
+  [
     // header
     rows[0].join("|"),
     // separation row
@@ -98,7 +96,7 @@ fn format_pretty(cols: usize, rows: &Vec<Vec<String>>) -> String {
     .map(|(e, len)| e.pad_to_width(*len))
     .collect::<Vec<_>>()
     .join(" | ");
-  vec![
+  [
     // header
     format!("| {} |", &format_row(&rows[0])),
     // separation row
