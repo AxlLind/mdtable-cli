@@ -3,21 +3,20 @@ extern crate text_io;
 extern crate clap;
 extern crate pad;
 
-use std::fs::{File};
-use std::fs;
-use std::iter;
 use std::io::{self, BufRead, BufReader, Write};
+use std::fs::{self, File};
 use std::cmp::max;
+use std::iter;
 
 use clap::{App, Arg, ArgMatches};
 use pad::PadStr;
 
 struct Config {
-  quiet: bool,
-  minimize: bool,
+  quiet:     bool,
+  minimize:  bool,
   separator: String,
-  file: Option<String>,
-  outfile: Option<String>,
+  file:      Option<String>,
+  outfile:   Option<String>,
 }
 
 fn config_from_args(args: ArgMatches) -> Config {
@@ -48,7 +47,6 @@ fn read_data_stdin(rows: usize, cols: usize, separator: &String) -> io::Result< 
 }
 
 fn read_data_file(rows: usize, cols: usize, separator: &String, file: &String) -> io::Result< Vec<Vec<String>> > {
-  let size = cols * (rows + 1);
   let mut curr = 0;
   let mut v = vec![Vec::with_capacity(cols); rows+1];
   for s in BufReader::new(File::open(file)?).lines() {
@@ -62,21 +60,18 @@ fn read_data_file(rows: usize, cols: usize, separator: &String, file: &String) -
       }
     }
   }
-  assert!(false, "File contained less than {} elements", size);
+  assert!(false, "File '{}' contained less than {} elements", &file, cols * (rows + 1));
   Ok(v)
 }
 
 fn format_minimize(cols: usize, rows: &Vec<Vec<String>>) -> String {
   [
-    // header
-    rows[0].join("|"),
-    // separation row
-    iter::repeat("---")
+    rows[0].join("|"),  // header
+    iter::repeat("---") // separation row
       .take(cols)
       .collect::<Vec<_>>()
       .join("|"),
-    // all data rows
-    rows[1..].iter()
+    rows[1..].iter()    // all data rows
       .map(|row| row.join("|"))
       .collect::<Vec<_>>()
       .join("\n"),
@@ -97,16 +92,13 @@ fn format_pretty(cols: usize, rows: &Vec<Vec<String>>) -> String {
     .collect::<Vec<_>>()
     .join(" | ");
   [
-    // header
-    format!("| {} |", &format_row(&rows[0])),
-    // separation row
-    format!("|-{}-|", &lengths.iter()
+    format!("| {} |", &format_row(&rows[0])), // header
+    format!("|-{}-|", &lengths.iter()         // separation row
       .map(|len| "-".repeat(*len))
       .collect::<Vec<_>>()
       .join("-|-")
     ),
-    // all data rows
-    format!("| {} |", &rows[1..].iter()
+    format!("| {} |", &rows[1..].iter()       // all data rows
       .map(format_row)
       .collect::<Vec<_>>()
       .join(" |\n| ")
@@ -160,8 +152,8 @@ fn main() -> io::Result<()> {
   assert!(cols > 1, "Need at least 2 columns (got {})", cols);
   if !config.quiet {
     eprintln!("Enter {} values separated by '{}' and/or line breaks.",
-      (rows+1)*cols,
-      &config.separator
+      cols*(rows+1),
+      &config.separator,
     );
   }
   let data = match config.file {
@@ -171,10 +163,10 @@ fn main() -> io::Result<()> {
   let table = match config.minimize {
     true  => format_minimize(cols, &data),
     false => format_pretty(cols, &data),
-  };
+  } + "\n";
   match config.outfile {
-    None => println!("{}", table),
-    Some(f) => fs::write(f, table + "\n")?,
+    None    => print!("{}", table),
+    Some(f) => fs::write(f, table)?,
   };
   Ok(())
 }
