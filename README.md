@@ -4,7 +4,8 @@ Command line tool for generating markdown tables. It takes in CSV-formatted data
 # Usage
 ```
 mdtable -f table.csv -o mdtable.md
-mdtable -f table.csv | mdtable.md
+mdtable -f table.csv > mdtable.md
+cat table.csv | mdtable > mdtable.md
 ```
 
 The application first expects two numbers: the numbers of rows (not including the header) and number of columns. Then the data of the table, seperated by ',' (optionally another given separator string) and/or newlines.
