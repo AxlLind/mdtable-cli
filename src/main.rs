@@ -6,7 +6,6 @@ extern crate pad;
 use std::io::{self, BufRead, BufReader, Write};
 use std::fs::{self, File};
 use std::cmp::max;
-use std::iter;
 
 use clap::{App, Arg, ArgMatches};
 use pad::PadStr;
@@ -83,12 +82,9 @@ fn read_data_file(rows: usize, cols: usize, separator: &String, file: &String) -
 
 fn format_minimize(cols: usize, rows: &Vec<Vec<String>>) -> String {
   [
-    rows[0].join("|"),  // header
-    iter::repeat("---") // separation row
-      .take(cols)
-      .collect::<Vec<_>>()
-      .join("|"),
-    rows[1..].iter()    // all data rows
+    rows[0].join("|"),           // header
+    vec!["---"; cols].join("|"), // separation row
+    rows[1..].iter()             // all data rows
       .map(|row| row.join("|"))
       .collect::<Vec<_>>()
       .join("\n"),
