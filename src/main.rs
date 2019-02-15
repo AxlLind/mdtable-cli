@@ -9,7 +9,6 @@ use clap::{App, Arg, ArgMatches};
 use pad::PadStr;
 
 struct Config {
-  quiet:     bool,
   minimize:  bool,
   separator: String,
   file:      Option<String>,
@@ -18,9 +17,8 @@ struct Config {
 
 fn config_from_args(args: ArgMatches) -> Config {
   Config {
-    quiet:     args.is_present("quiet"),
     minimize:  args.is_present("minimize"),
-    separator: args.value_of("separator").unwrap().to_string(),
+    separator: args.value_of("separator").map(String::from).unwrap(),
     file:      args.value_of("infile").map(String::from),
     outfile:   args.value_of("outfile").map(String::from),
   }
@@ -31,7 +29,7 @@ fn resize_rows(v: &mut Vec<Vec<String>>) {
     .map(|line: &Vec<String>| line.len())
     .max()
     .unwrap();
-  for mut line in v {
+  for line in v {
     line.resize(max, String::new());
   }
 }
@@ -43,6 +41,7 @@ fn read_data_stdin(separator: &String) -> io::Result< Vec<Vec<String>> > {
     if line.trim().is_empty() { break; }
     v.push(line
       .split(separator)
+      .map(|word| word.trim())
       .map(String::from)
       .collect()
     );
@@ -56,6 +55,7 @@ fn read_data_file(separator: &String, file: &String) -> io::Result< Vec<Vec<Stri
   for line in BufReader::new(File::open(file)?).lines() {
     v.push(line?
       .split(separator)
+      .map(|word| word.trim())
       .map(String::from)
       .collect()
     );
