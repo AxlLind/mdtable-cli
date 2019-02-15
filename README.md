@@ -7,10 +7,9 @@ mdtable -f table.csv -o mdtable.md
 mdtable -f table.csv > mdtable.md
 cat table.csv | mdtable > mdtable.md
 ```
+The application expects each row of the table as rows in the input, i.e seperated by newlines. Each element of the row is seperated by a "," (or another value, see flag `-s`).
 
-The application first expects two numbers: the numbers of rows (not including the header) and number of columns. Then the data of the table, seperated by ',' (optionally another given separator string) and/or newlines.
-
-This can either come from a file with the `-f` flag or from stdin.
+This can either come from a file with the `-f` flag or from stdin. If from stdin you signal end of table by either EOF or by an empty line (i.e hitting enter twice).
 
 See examples of input and output [here](./examples.md).
 
@@ -25,7 +24,6 @@ USAGE:
 FLAGS:
     -h, --help        Prints help information
     -m, --minimize    Minimizes table output
-    -q, --quiet       Supresses program instructions.
     -V, --version     Prints version information
 
 OPTIONS:

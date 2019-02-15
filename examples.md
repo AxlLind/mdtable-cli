@@ -1,12 +1,11 @@
-
----
 # Examples
 ### In
 ```
-2 2
 Time, Temp
 14:22, 0°
 14:43, -1°
+
+
 ```
 
 ### Out
@@ -19,32 +18,35 @@ Time, Temp
 
 ### In
 ```
-2 3
-Test, data, please, this, can, be, on, one, line
+Table, with, empty, cells
+missing, cells
+,,can,be
+anywhere
+
+
 ```
 
 ### Out
-| Test | data | please |
-|------|------|--------|
-| this | can  | be     |
-| on   | one  | line   |
+| Table    |  with  |  empty |  cells |
+|----------|--------|--------|--------|
+| missing  |  cells |        |        |
+|          |        | can    | be     |
+| anywhere |        |        |        |
 
 ---
 
 ### In
+With the flag `-s " "`:
 ```
-2 3
-Here, is
-header
-Can
-also
-be
-on, different
-lines
+Spaces as separator
+can also be
+used
+
+
 ```
 
 ### Out
-| Here | is        | header |
-|------|-----------|--------|
-| Can  | also      | be     |
-| on   | different | lines  |
+| Spaces | as   | separator |
+|--------|------|-----------|
+| can    | also | be        |
+| used   |      |           |
