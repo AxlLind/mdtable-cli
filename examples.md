@@ -27,11 +27,11 @@ anywhere
 ```
 
 ### Out
-| Table    |  with  |  empty |  cells |
-|----------|--------|--------|--------|
-| missing  |  cells |        |        |
-|          |        | can    | be     |
-| anywhere |        |        |        |
+| Table    | with  | empty | cells |
+|----------|-------|-------|-------|
+| missing  | cells |       |       |
+|          |       | can   | be    |
+| anywhere |       |       |       |
 
 ---
 
