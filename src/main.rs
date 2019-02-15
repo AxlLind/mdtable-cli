@@ -140,7 +140,7 @@ fn main() -> io::Result<()> {
   };
   if data.len() < 2 || data[0].len() == 0 {
     println!("Table requires at least 2 rows (including header) and 1 column.");
-    return Ok(());
+    std::process::exit(1);
   }
   let table = match config.minimize {
     true  => format_minimize(&data),
