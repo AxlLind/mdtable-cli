@@ -15,7 +15,35 @@ struct Config {
   outfile:   Option<String>,
 }
 
-fn config_from_args(args: ArgMatches) -> Config {
+fn get_config() -> Config {
+  let args = App::new("mdtable")
+    .version("0.01")
+    .author("Axel Lindeberg")
+    .about("Makes creating tables in markdown easier!")
+    .arg(Arg::with_name("minimize")
+      .help("Minimizes table output")
+      .long("minimize")
+      .short("m")
+    )
+    .arg(Arg::with_name("infile")
+      .help("Reads table values from this file if given, stdin otherwise.")
+      .long("file")
+      .short("f")
+      .takes_value(true)
+    )
+    .arg(Arg::with_name("outfile")
+      .help("Prints output to this if given, stdout otherwise.")
+      .long("out")
+      .short("o")
+      .takes_value(true)
+    )
+    .arg(Arg::with_name("separator")
+      .help("String that separates values.")
+      .long("separator")
+      .short("s")
+      .default_value(",")
+    )
+    .get_matches();
   Config {
     minimize:  args.is_present("minimize"),
     separator: args.value_of("separator").map(String::from).unwrap(),
@@ -52,7 +80,7 @@ fn read_data_stdin(separator: &String) -> io::Result< Vec<Vec<String>> > {
 
 fn read_data_file(separator: &String, file: &String) -> io::Result< Vec<Vec<String>> > {
   let mut v = Vec::new();
-  for line in BufReader::new(File::open(file)?).lines() {
+  for line in BufReader::new( File::open(file)? ).lines() {
     v.push(line?
       .split(separator)
       .map(|word| word.trim())
@@ -80,12 +108,12 @@ fn format_pretty(rows: &Vec<Vec<String>>) -> String {
     vec![1; rows[0].len()],
     |lens, row| row.iter()
       .zip(lens)
-      .map(|(e,len)| max(e.len(), len))
+      .map(|(s,len)| max(s.len(), len))
       .collect()
   );
   let format_row = |row: &Vec<String>| row.iter()
     .zip(&lengths)
-    .map(|(e, len)| e.pad_to_width(*len))
+    .map(|(s, len)| s.pad_to_width(*len))
     .collect::<Vec<_>>()
     .join(" | ");
   [
@@ -104,36 +132,7 @@ fn format_pretty(rows: &Vec<Vec<String>>) -> String {
 }
 
 fn main() -> io::Result<()> {
-  let config = config_from_args(
-    App::new("mdtable")
-      .version("0.01")
-      .author("Axel Lindeberg")
-      .about("Makes creating tables in markdown easier!")
-      .arg(Arg::with_name("minimize")
-        .help("Minimizes table output")
-        .long("minimize")
-        .short("m")
-      )
-      .arg(Arg::with_name("infile")
-        .help("Reads table values from this file if given, stdin otherwise.")
-        .long("file")
-        .short("f")
-        .takes_value(true)
-      )
-      .arg(Arg::with_name("outfile")
-        .help("Prints output to this if given, stdout otherwise.")
-        .long("out")
-        .short("o")
-        .takes_value(true)
-      )
-      .arg(Arg::with_name("separator")
-        .help("String that separates values.")
-        .long("separator")
-        .short("s")
-        .default_value(",")
-      )
-      .get_matches()
-  );
+  let config = get_config();
   let data = match config.file {
     None    => read_data_stdin(&config.separator)?,
     Some(f) => read_data_file(&config.separator, &f)?,
