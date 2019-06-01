@@ -19,7 +19,7 @@ struct Config {
 
 fn get_config() -> Config {
   let args = App::new("mdtable")
-    .version("0.1.0")
+    .version("1.0.0")
     .author("Axel Lindeberg")
     .about("Makes creating tables in markdown much easier!")
     .arg(Arg::with_name("minimize")
