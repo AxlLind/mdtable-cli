@@ -21,14 +21,14 @@ fn get_config() -> Config {
   let args = App::new("mdtable")
     .version("0.1.0")
     .author("Axel Lindeberg")
-    .about("Makes creating tables in markdown easier!")
+    .about("Makes creating tables in markdown much easier!")
     .arg(Arg::with_name("minimize")
       .help("Minimizes table output")
       .long("minimize")
       .short("m")
     )
     .arg(Arg::with_name("infile")
-      .help("Reads table values from this file if given, stdin otherwise.")
+      .help("Reads table values from this if given, stdin otherwise.")
       .long("file")
       .short("f")
       .takes_value(true)
@@ -57,7 +57,8 @@ fn get_config() -> Config {
 
 fn get_lines_stdin() -> io::Result<Vec<String>> {
   let mut lines = Vec::new();
-  for s in io::stdin().lock().lines() {
+  let stdin = io::stdin();
+  for s in stdin.lock().lines() {
     let line = s?;
     if line.trim().is_empty() { break; }
     lines.push(line)
