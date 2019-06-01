@@ -1,14 +1,14 @@
 extern crate clap;
 extern crate pad;
 
-type TableData = Vec<Vec<String>>;
-
 use std::io::{self, BufRead, BufReader};
 use std::fs::{self, File};
 use std::cmp::max;
 
 use clap::{App, Arg};
 use pad::PadStr;
+
+type TableData = Vec<Vec<String>>;
 
 struct Config {
   minimize:  bool,
@@ -46,6 +46,7 @@ fn get_config() -> Config {
       .default_value(",")
     )
     .get_matches();
+
   Config {
     minimize:  args.is_present("minimize"),
     separator: args.value_of("separator").map(String::from).unwrap(),
@@ -106,9 +107,9 @@ fn format_minimized(rows: &TableData) -> String {
   ].join("\n")
 }
 
-fn format_pretty(rows: &TableData) -> String {
-  let lengths = rows.iter().fold(
-    vec![1; rows[0].len()],
+fn format_pretty(data: &TableData) -> String {
+  let lengths = data.iter().fold(
+    vec![1; data[0].len()],
     |lens, row| row.iter()
       .zip(lens)
       .map(|(s,len)| max(s.len(), len))
@@ -119,18 +120,21 @@ fn format_pretty(rows: &TableData) -> String {
     .map(|(s, len)| s.pad_to_width(*len))
     .collect::<Vec<_>>()
     .join(" | ");
+
+  let header = &format_row(&data[0]);
+  let separator = &lengths.iter()
+    .map(|len| "-".repeat(*len))
+    .collect::<Vec<_>>()
+    .join("-|-");
+  let rows = &data[1..].iter()
+    .map(format_row)
+    .collect::<Vec<_>>()
+    .join(" |\n| ");
+
   [
-    format!("| {} |", &format_row(&rows[0])),
-    format!("|-{}-|", &lengths.iter()
-      .map(|len| "-".repeat(*len))
-      .collect::<Vec<_>>()
-      .join("-|-")
-    ),
-    format!("| {} |", &rows[1..].iter()
-      .map(format_row)
-      .collect::<Vec<_>>()
-      .join(" |\n| ")
-    ),
+    format!("| {} |", header),
+    format!("|-{}-|", separator),
+    format!("| {} |", rows),
   ].join("\n")
 }
 
