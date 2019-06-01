@@ -1,6 +1,8 @@
 # mdtable-cli
 Command line tool for generating markdown tables. It takes in CSV-formatted data and converts it into a markdown table.
 
+See also [Crates.io](https://crates.io/crates/mdtable-cli) link.
+
 # Usage
 ```
 mdtable -f table.csv -o mdtable.md
@@ -21,7 +23,7 @@ If you're a rust programmer (e.g you have `rustc` and `cargo`) simply do:
 cargo install mdtable-cli
 ```
 
-If you don't want to download `rustc` and `cargo` you can [download the binary](https://github.com/AxlLind/mdtable-cli/raw/master/mdtable) directly from this repository. Put it in a folder in your path, for example `/usr/local/bin`.
+If you don't want to download `rustc` and `cargo` you can download the binary directly from [the releases page](https://github.com/AxlLind/mdtable-cli/releases). Put it in a folder in your path, for example `/usr/local/bin`.
 
 ## Building from source
 If you don't trust random binaries from github you can build it yourself from source:
