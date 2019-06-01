@@ -1,11 +1,13 @@
 extern crate clap;
 extern crate pad;
 
+type TableData = Vec<Vec<String>>;
+
 use std::io::{self, BufRead, BufReader};
 use std::fs::{self, File};
 use std::cmp::max;
 
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg};
 use pad::PadStr;
 
 struct Config {
@@ -52,47 +54,48 @@ fn get_config() -> Config {
   }
 }
 
-fn resize_rows(v: &mut Vec<Vec<String>>) {
-  let max = v.iter()
-    .map(|line: &Vec<String>| line.len())
-    .max()
-    .unwrap();
-  for line in v {
-    line.resize(max, String::new());
-  }
-}
-
-fn read_data_stdin(separator: &String) -> io::Result< Vec<Vec<String>> > {
-  let mut v = Vec::new();
+fn get_lines_stdin() -> io::Result<Vec<String>> {
+  let mut lines = Vec::new();
   for s in io::stdin().lock().lines() {
     let line = s?;
     if line.trim().is_empty() { break; }
-    v.push(line
-      .split(separator)
-      .map(|word| word.trim())
-      .map(String::from)
-      .collect()
-    );
+    lines.push(line)
   }
-  resize_rows(&mut v);
-  Ok(v)
+  Ok(lines)
 }
 
-fn read_data_file(separator: &String, file: &String) -> io::Result< Vec<Vec<String>> > {
-  let mut v = Vec::new();
+fn get_lines_file(file: &String) -> io::Result<Vec<String>> {
+  let mut lines = Vec::new();
   for line in BufReader::new( File::open(file)? ).lines() {
-    v.push(line?
+    lines.push(line?)
+  }
+  Ok(lines)
+}
+
+fn get_table_data(separator: &String, file: &Option<String>) -> io::Result<TableData> {
+  let lines = match file {
+    None    => get_lines_stdin()?,
+    Some(f) => get_lines_file(f)?,
+  };
+  let mut data: TableData = lines.iter()
+    .map(|line| line
       .split(separator)
       .map(|word| word.trim())
       .map(String::from)
       .collect()
-    );
+    )
+    .collect();
+  let max_len = data.iter()
+    .map(|row| row.len())
+    .max()
+    .unwrap();
+  for row in &mut data {
+    row.resize(max_len, String::new());
   }
-  resize_rows(&mut v);
-  Ok(v)
+  Ok(data)
 }
 
-fn format_minimize(rows: &Vec<Vec<String>>) -> String {
+fn format_minimized(rows: &TableData) -> String {
   [
     rows[0].join("|"),
     vec!["---"; rows[0].len()].join("|"),
@@ -103,7 +106,7 @@ fn format_minimize(rows: &Vec<Vec<String>>) -> String {
   ].join("\n")
 }
 
-fn format_pretty(rows: &Vec<Vec<String>>) -> String {
+fn format_pretty(rows: &TableData) -> String {
   let lengths = rows.iter().fold(
     vec![1; rows[0].len()],
     |lens, row| row.iter()
@@ -133,16 +136,15 @@ fn format_pretty(rows: &Vec<Vec<String>>) -> String {
 
 fn main() -> io::Result<()> {
   let config = get_config();
-  let data = match config.file {
-    None    => read_data_stdin(&config.separator)?,
-    Some(f) => read_data_file(&config.separator, &f)?,
-  };
+  let data = get_table_data(&config.separator, &config.file)?;
+
   if data.len() < 2 || data[0].len() == 0 {
     println!("Table requires at least 2 rows (including header) and 1 column.");
     std::process::exit(1);
   }
+
   let table = match config.minimize {
-    true  => format_minimize(&data),
+    true  => format_minimized(&data),
     false => format_pretty(&data),
   } + "\n";
   match config.outfile {
