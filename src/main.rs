@@ -58,14 +58,15 @@ fn get_config() -> Config {
 fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
   match file {
     None => {
-      let mut lines = Vec::new();
       let stdin = io::stdin();
-      for s in stdin.lock().lines() {
-        let line = s?;
-        if line.trim().is_empty() { break; }
-        lines.push(line)
-      }
-      Ok(lines)
+      let lines = stdin.lock()
+        .lines()
+        .take_while(|line| match line {
+          Ok(s)  => !s.trim().is_empty(),
+          Err(_) => false,
+        })
+        .collect();
+      lines
     },
     Some(f) => BufReader::new( File::open(f)? )
       .lines()
