@@ -1,12 +1,12 @@
 extern crate clap;
 extern crate pad;
 
-use std::io::{self, BufRead, BufReader};
-use std::fs::{self, File};
-use std::cmp::max;
-
 use clap::{App, Arg};
 use pad::PadStr;
+
+use std::io::{self, Result, BufRead, BufReader};
+use std::fs::{self, File};
+use std::cmp::max;
 
 type TableData = Vec<Vec<String>>;
 
@@ -19,7 +19,7 @@ struct Config {
 
 fn get_config() -> Config {
   let args = App::new("mdtable")
-    .version("1.0.0")
+    .version("1.0.1")
     .author("Axel Lindeberg")
     .about("Makes creating tables in markdown much easier!")
     .arg(Arg::with_name("minimize")
@@ -55,7 +55,7 @@ fn get_config() -> Config {
   }
 }
 
-fn get_lines_stdin() -> io::Result<Vec<String>> {
+fn get_lines_stdin() -> Result<Vec<String>> {
   let mut lines = Vec::new();
   let stdin = io::stdin();
   for s in stdin.lock().lines() {
@@ -66,7 +66,7 @@ fn get_lines_stdin() -> io::Result<Vec<String>> {
   Ok(lines)
 }
 
-fn get_lines_file(file: &String) -> io::Result<Vec<String>> {
+fn get_lines_file(file: &String) -> Result<Vec<String>> {
   let mut lines = Vec::new();
   for line in BufReader::new( File::open(file)? ).lines() {
     lines.push(line?)
@@ -74,7 +74,7 @@ fn get_lines_file(file: &String) -> io::Result<Vec<String>> {
   Ok(lines)
 }
 
-fn get_table_data(separator: &String, file: &Option<String>) -> io::Result<TableData> {
+fn get_table_data(separator: &String, file: &Option<String>) -> Result<TableData> {
   let lines = match file {
     None    => get_lines_stdin()?,
     Some(f) => get_lines_file(f)?,
@@ -139,12 +139,12 @@ fn format_pretty(data: &TableData) -> String {
   ].join("\n")
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
   let config = get_config();
   let data = get_table_data(&config.separator, &config.file)?;
 
   if data.len() < 2 || data[0].len() == 0 {
-    println!("Table requires at least 2 rows (including header) and 1 column.");
+    eprintln!("Table requires at least 2 rows (including header) and 1 column.");
     std::process::exit(1);
   }
 

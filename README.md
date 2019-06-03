@@ -40,7 +40,7 @@ cp target/release/mdtable /usr/local/bin/
 # Options
 ```
 USAGE:
-    mdtable-cli [FLAGS] [OPTIONS]
+    mdtable [FLAGS] [OPTIONS]
 
 FLAGS:
     -h, --help        Prints help information
