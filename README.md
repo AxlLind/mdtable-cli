@@ -1,6 +1,8 @@
 # mdtable-cli
 Command line tool for generating markdown tables. It takes in CSV-formatted data and converts it into a markdown table.
 
+![Demo gif](./demo.gif)
+
 See also [Crates.io](https://crates.io/crates/mdtable-cli) link.
 
 # Usage
