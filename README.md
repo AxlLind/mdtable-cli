@@ -48,7 +48,7 @@ FLAGS:
     -V, --version     Prints version information
 
 OPTIONS:
-    -f, --file <infile>            Reads table values from this if given, stdin otherwise.
+    -f, --file <file>              Reads table values from this if given, stdin otherwise.
     -o, --out <outfile>            Prints output to this if given, stdout otherwise.
     -s, --separator <separator>    String that separates values. [default: ,]
 ```

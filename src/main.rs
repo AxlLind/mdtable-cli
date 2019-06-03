@@ -27,7 +27,7 @@ fn get_config() -> Config {
       .long("minimize")
       .short("m")
     )
-    .arg(Arg::with_name("infile")
+    .arg(Arg::with_name("file")
       .help("Reads table values from this if given, stdin otherwise.")
       .long("file")
       .short("f")
@@ -50,34 +50,31 @@ fn get_config() -> Config {
   Config {
     minimize:  args.is_present("minimize"),
     separator: args.value_of("separator").map(String::from).unwrap(),
-    file:      args.value_of("infile").map(String::from),
+    file:      args.value_of("file").map(String::from),
     outfile:   args.value_of("outfile").map(String::from),
   }
 }
 
-fn get_lines_stdin() -> Result<Vec<String>> {
-  let mut lines = Vec::new();
-  let stdin = io::stdin();
-  for s in stdin.lock().lines() {
-    let line = s?;
-    if line.trim().is_empty() { break; }
-    lines.push(line)
+fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
+  match file {
+    None => {
+      let mut lines = Vec::new();
+      let stdin = io::stdin();
+      for s in stdin.lock().lines() {
+        let line = s?;
+        if line.trim().is_empty() { break; }
+        lines.push(line)
+      }
+      Ok(lines)
+    },
+    Some(f) => BufReader::new( File::open(f)? )
+      .lines()
+      .collect()
   }
-  Ok(lines)
 }
 
-fn get_lines_file(file: &String) -> Result<Vec<String>> {
-  BufReader::new( File::open(file)? )
-    .lines()
-    .collect()
-}
-
-fn get_table_data(separator: &String, file: &Option<String>) -> Result<TableData> {
-  let lines = match file {
-    None    => get_lines_stdin()?,
-    Some(f) => get_lines_file(f)?,
-  };
-  let mut data: TableData = lines.iter()
+fn parse_table_data(lines: &Vec<String>, separator: &String) -> TableData {
+  let mut rows: TableData = lines.iter()
     .map(|line| line
       .split(separator)
       .map(|word| word.trim())
@@ -85,14 +82,14 @@ fn get_table_data(separator: &String, file: &Option<String>) -> Result<TableData
       .collect()
     )
     .collect();
-  let max_len = data.iter()
+  let max_len = rows.iter()
     .map(|row| row.len())
     .max()
     .unwrap();
-  for row in &mut data {
+  for row in &mut rows {
     row.resize(max_len, String::new());
   }
-  Ok(data)
+  rows
 }
 
 fn format_minimized(rows: &TableData) -> String {
@@ -139,7 +136,8 @@ fn format_pretty(data: &TableData) -> String {
 
 fn main() -> Result<()> {
   let config = get_config();
-  let data = get_table_data(&config.separator, &config.file)?;
+  let lines  = read_lines(&config.file)?;
+  let data   = parse_table_data(&lines, &config.separator);
 
   if data.len() < 2 || data[0].len() == 0 {
     eprintln!("Table requires at least 2 rows (including header) and 1 column.");
