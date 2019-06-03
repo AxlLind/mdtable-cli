@@ -4,6 +4,7 @@ extern crate pad;
 use clap::{App, Arg};
 use pad::PadStr;
 
+use std::iter;
 use std::io::{self, Result, BufRead, BufReader};
 use std::fs::{self, File};
 use std::cmp::max;
@@ -67,11 +68,9 @@ fn get_lines_stdin() -> Result<Vec<String>> {
 }
 
 fn get_lines_file(file: &String) -> Result<Vec<String>> {
-  let mut lines = Vec::new();
-  for line in BufReader::new( File::open(file)? ).lines() {
-    lines.push(line?)
-  }
-  Ok(lines)
+  BufReader::new( File::open(file)? )
+    .lines()
+    .collect()
 }
 
 fn get_table_data(separator: &String, file: &Option<String>) -> Result<TableData> {
