@@ -122,12 +122,12 @@ fn format_pretty(data: &TableData) -> String {
     .collect::<Vec<_>>()
     .join(" | ");
 
-  let header = &format_row(&data[0]);
-  let separator = &lengths.iter()
+  let header = format_row(&data[0]);
+  let separator = lengths.iter()
     .map(|len| "-".repeat(*len))
     .collect::<Vec<_>>()
     .join("-|-");
-  let rows = &data[1..].iter()
+  let rows = data[1..].iter()
     .map(format_row)
     .collect::<Vec<_>>()
     .join(" |\n| ");
