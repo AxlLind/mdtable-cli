@@ -4,7 +4,6 @@ extern crate pad;
 use clap::{App, Arg};
 use pad::PadStr;
 
-use std::iter;
 use std::io::{self, Result, BufRead, BufReader};
 use std::fs::{self, File};
 use std::cmp::max;
