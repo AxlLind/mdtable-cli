@@ -10,7 +10,7 @@ pub struct Config {
 impl Config {
   pub fn from_args() -> Config {
     let args = App::new("mdtable")
-      .version("1.0.1")
+      .version("1.0.2")
       .author("Axel Lindeberg")
       .about("Makes creating tables in markdown much easier!")
       .arg(Arg::with_name("minimize")
