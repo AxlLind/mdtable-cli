@@ -2,7 +2,6 @@ extern crate clap;
 extern crate pad;
 
 mod config;
-
 use pad::PadStr;
 use std::io::{self, Result, BufRead, BufReader};
 use std::fs::{self, File};
@@ -66,26 +65,23 @@ fn format_pretty(data: &Vec<Vec<String>>) -> String {
       .map(|(s,len)| max(s.len(), len))
       .collect()
   );
-  let format_row = |row: &Vec<String>| row.iter()
-    .zip(&lengths)
-    .map(|(s, len)| s.pad_to_width(*len))
-    .collect::<Vec<_>>()
-    .join(" | ");
 
-  let header = format_row(&data[0]);
+  let rows = data.iter()
+    .map(|row| row.iter()
+      .zip(&lengths)
+      .map(|(s, len)| s.pad_to_width(*len))
+      .collect::<Vec<_>>()
+      .join(" | ")
+    )
+    .collect::<Vec<_>>();
   let separator = lengths.iter()
     .map(|len| "-".repeat(*len))
     .collect::<Vec<_>>()
     .join("-|-");
-  let rows = data[1..].iter()
-    .map(format_row)
-    .collect::<Vec<_>>()
-    .join(" |\n| ");
-
   [
-    format!("| {} |", header),
+    format!("| {} |", rows[0]),
     format!("|-{}-|", separator),
-    format!("| {} |", rows),
+    format!("| {} |", rows[1..].join(" |\n| ")),
   ].join("\n")
 }
 
