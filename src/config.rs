@@ -1,10 +1,10 @@
 use clap::{App, Arg};
 
 pub struct Config {
-  pub minimize:  bool,
+  pub minimize: bool,
   pub separator: String,
-  pub file:      Option<String>,
-  pub outfile:   Option<String>,
+  pub file: Option<String>,
+  pub out:  Option<String>,
 }
 
 impl Config {
@@ -13,36 +13,17 @@ impl Config {
       .version("1.0.2")
       .author("Axel Lindeberg")
       .about("Makes creating tables in markdown much easier!")
-      .arg(Arg::with_name("minimize")
-        .help("Minimizes table output")
-        .long("minimize")
-        .short("m")
-      )
-      .arg(Arg::with_name("file")
-        .help("Reads table values from this if given, stdin otherwise.")
-        .long("file")
-        .short("f")
-        .takes_value(true)
-      )
-      .arg(Arg::with_name("outfile")
-        .help("Prints output to this if given, stdout otherwise.")
-        .long("out")
-        .short("o")
-        .takes_value(true)
-      )
-      .arg(Arg::with_name("separator")
-        .help("String that separates values.")
-        .long("separator")
-        .short("s")
-        .default_value(",")
-      )
+      .arg(Arg::from_usage("[FILE] 'Reads table tables from this. [default: stdin]'"))
+      .arg(Arg::from_usage("-o --out       [FILE]   'Prints output to this.  [default: stdout]'"))
+      .arg(Arg::from_usage("-s --separator [STRING] 'Separates values.       [default: ,]'"))
+      .arg(Arg::from_usage("-m --minimize           'Minimizes table output'"))
       .get_matches();
 
     Config {
       minimize:  args.is_present("minimize"),
-      separator: args.value_of("separator").map(String::from).unwrap(),
-      file:      args.value_of("file").map(String::from),
-      outfile:   args.value_of("outfile").map(String::from),
+      separator: args.value_of("separator").unwrap_or(",").to_string(),
+      file:      args.value_of("FILE").map(String::from),
+      out:       args.value_of("out").map(String::from),
     }
   }
 }

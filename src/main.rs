@@ -10,6 +10,9 @@ use config::Config;
 
 fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
   match file {
+    Some(f) => BufReader::new( File::open(f)? )
+      .lines()
+      .collect(),
     None => {
       let stdin = io::stdin();
       let lines = stdin.lock()
@@ -21,21 +24,18 @@ fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
         .collect();
       lines
     },
-    Some(f) => BufReader::new( File::open(f)? )
-      .lines()
-      .collect()
   }
 }
 
 fn parse_table_data(lines: &Vec<String>, separator: &String) -> Vec<Vec<String>> {
-  let mut rows: Vec<Vec<String>> = lines.iter()
+  let mut rows = lines.iter()
     .map(|line| line
       .split(separator)
       .map(|word| word.trim())
       .map(String::from)
-      .collect()
+      .collect::<Vec<_>>()
     )
-    .collect();
+    .collect::<Vec<_>>();
   let max_len = rows.iter()
     .map(|row| row.len())
     .max()
@@ -87,8 +87,8 @@ fn format_pretty(data: &Vec<Vec<String>>) -> String {
 
 fn main() -> Result<()> {
   let config = Config::from_args();
-  let lines  = read_lines(&config.file)?;
-  let data   = parse_table_data(&lines, &config.separator);
+  let lines = read_lines(&config.file)?;
+  let data = parse_table_data(&lines, &config.separator);
 
   if data.len() < 2 || data[0].len() == 0 {
     eprintln!("Bad Input: Table requires at least 2 rows (including header) and 1 column.");
@@ -99,9 +99,9 @@ fn main() -> Result<()> {
     true  => format_minimized(&data),
     false => format_pretty(&data),
   } + "\n";
-  match config.outfile {
-    None    => print!("{}", &table),
+  match config.out {
     Some(f) => fs::write(f, &table)?,
+    None    => print!("{}", &table),
   };
   Ok(())
 }
