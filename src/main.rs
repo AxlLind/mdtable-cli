@@ -85,13 +85,13 @@ fn format_pretty(data: &Vec<Vec<String>>) -> String {
   ].join("\n")
 }
 
-fn main() -> Result<()> {
+fn main() {
   let config = Config::from_args();
-  let lines = read_lines(&config.file)?;
+  let lines = read_lines(&config.file).expect("Error when reading input");
   let data = parse_table_data(&lines, &config.separator);
 
   if data.len() < 2 || data[0].len() == 0 {
-    eprintln!("Bad Input: Table requires at least 2 rows (including header) and 1 column.");
+    eprintln!("Bad Input: Requires at least 2 rows (including header) and 1 column.");
     std::process::exit(1);
   }
 
@@ -100,8 +100,7 @@ fn main() -> Result<()> {
     false => format_pretty(&data),
   } + "\n";
   match config.out {
-    Some(f) => fs::write(f, &table)?,
+    Some(f) => fs::write(f, &table).expect("Error when writing output to file"),
     None    => print!("{}", &table),
   };
-  Ok(())
 }
