@@ -1,12 +1,14 @@
+extern crate easy_error;
 extern crate clap;
 extern crate pad;
 
 mod config;
-use pad::PadStr;
-use std::io::{self, Result, BufRead, BufReader};
-use std::fs::{self, File};
-use std::cmp::max;
 use config::Config;
+use pad::PadStr;
+use easy_error::{ ResultExt, termination, ensure };
+use std::io::{ self, Result, BufRead, BufReader };
+use std::fs::{ self, File };
+use std::cmp::max;
 
 fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
   match file {
@@ -85,22 +87,23 @@ fn format_pretty(data: &Vec<Vec<String>>) -> String {
   ].join("\n")
 }
 
-fn main() {
+fn main() -> termination::Result {
   let config = Config::from_args();
-  let lines = read_lines(&config.file).expect("Error when reading input");
+  let lines = read_lines(&config.file).context("Error when reading input")?;
   let data = parse_table_data(&lines, &config.separator);
 
-  if data.len() < 2 || data[0].len() == 0 {
-    eprintln!("Bad Input: Requires at least 2 rows (including header) and 1 column.");
-    std::process::exit(1);
-  }
+  ensure!(
+    data.len() > 1 && !data[0].is_empty(),
+    "Input requires at least 2 rows and 1 column."
+  );
 
   let table = match config.minimize {
     true  => format_minimized(&data),
     false => format_pretty(&data),
   } + "\n";
   match config.out {
-    Some(f) => fs::write(f, &table).expect("Error when writing output to file"),
-    None    => print!("{}", &table),
+    Some(f) => fs::write(f, table).context("Error when writing output")?,
+    None    => print!("{}", table),
   };
+  Ok(())
 }

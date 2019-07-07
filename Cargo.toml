@@ -17,6 +17,4 @@ name = "mdtable"
 [dependencies]
 clap = "2.33.0"
 pad = "0.1.5"
-
-[profile.release]
-opt-level = 3
+easy-error = "0.1.1"
