@@ -3,21 +3,23 @@ Command line tool for generating markdown tables. It takes in CSV-formatted data
 
 ![Demo gif](./demo.gif)
 
-See also [Crates.io](https://crates.io/crates/mdtable-cli) link.
+See also the [Crates.io](https://crates.io/crates/mdtable-cli) page.
 
 # Usage
+The application expects each row of the table as rows in the input, i.e rows separated by newlines. Each element of the row is seperated by a `,` (or another value see flag `-s`). This can either come from a file with a positional argument or from stdin. If from stdin you can signal the end of the table by either `EOF` or by an empty line (i.e hitting enter twice).
+
+Here are some example cli usages:
+
 ```
-mdtable -f table.csv -o mdtable.md
-mdtable -f table.csv > mdtable.md
+mdtable
+mdtable table.csv -o mdtable.md
+mdtable table.csv > mdtable.md
 cat table.csv | mdtable > mdtable.md
 ```
-See `Options` for additional flags.
 
-The application expects each row of the table as rows in the input, i.e rows separated by newlines. Each element of the row is seperated by a `,` (or another value, see flag `-s`).
+See `Options` for a full description program arguments.
 
-This can either come from a file with the `-f` flag or from stdin. If from stdin you signal end of table by either `EOF` or by an empty line (i.e hitting enter twice).
-
-See examples of input and output [here](./examples.md).
+For examples of input and corresponding output see [examples.md](./examples.md)
 
 # Installation
 If you're a rust programmer (e.g you have `rustc` and `cargo`) simply do:
@@ -36,11 +38,10 @@ cargo build --release
 cp target/release/mdtable /usr/local/bin/
 ```
 
-
 # Options
 ```
 USAGE:
-    mdtable [FLAGS] [OPTIONS]
+    mdtable [FLAGS] [OPTIONS] [FILE]
 
 FLAGS:
     -h, --help        Prints help information
@@ -48,7 +49,9 @@ FLAGS:
     -V, --version     Prints version information
 
 OPTIONS:
-    -f, --file <file>              Reads table values from this if given, stdin otherwise.
-    -o, --out <outfile>            Prints output to this if given, stdout otherwise.
-    -s, --separator <separator>    String that separates values. [default: ,]
+    -o, --out <FILE>            Prints output to this.  [default: stdout]
+    -s, --separator <STRING>    Separates values.       [default: ,]
+
+ARGS:
+    <FILE>    Reads table tables from this. [default: stdin]
 ```
