@@ -17,14 +17,13 @@ fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
       .collect(),
     None => {
       let stdin = io::stdin();
-      let lines = stdin.lock()
-        .lines()
+      let lock = stdin.lock();
+      lock.lines()
         .take_while(|line| match line {
           Ok(s)  => !s.trim().is_empty(),
           Err(_) => false,
         })
-        .collect();
-      lines
+        .collect()
     },
   }
 }
@@ -67,7 +66,6 @@ fn format_pretty(data: &Vec<Vec<String>>) -> String {
       .map(|(s,len)| max(s.len(), len))
       .collect()
   );
-
   let rows = data.iter()
     .map(|row| row.iter()
       .zip(&lengths)

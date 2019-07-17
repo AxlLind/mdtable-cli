@@ -13,12 +13,13 @@ impl Config {
       .version("1.1.1")
       .author("Axel Lindeberg")
       .about("Makes creating tables in markdown much easier!")
-      .arg(Arg::from_usage("[FILE] 'Reads table tables from this. [default: stdin]'"))
-      .arg(Arg::from_usage("-o --out       [FILE]   'Prints output to this.  [default: stdout]'"))
-      .arg(Arg::from_usage("-s --separator [STRING] 'Separates values.       [default: ,]'"))
-      .arg(Arg::from_usage("-m --minimize           'Minimizes table output'"))
+      .args(&[
+        Arg::from_usage("[FILE] 'Reads table tables from this. [default: stdin]'"),
+        Arg::from_usage("-o --out       [FILE]   'Prints output to this.  [default: stdout]'"),
+        Arg::from_usage("-s --separator [STRING] 'Separates values.       [default: ,]'"),
+        Arg::from_usage("-m --minimize           'Minimizes table output'"),
+      ])
       .get_matches();
-
     Config {
       minimize:  args.is_present("minimize"),
       separator: args.value_of("separator").unwrap_or(",").to_string(),
