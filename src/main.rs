@@ -28,7 +28,7 @@ fn read_lines(file: &Option<String>) -> Result<Vec<String>> {
   }
 }
 
-fn parse_table_data(lines: &Vec<String>, separator: &String) -> Vec<Vec<String>> {
+fn parse_table_data(lines: &[String], separator: &str) -> Vec<Vec<String>> {
   let mut rows = lines.iter()
     .map(|line| line
       .split(separator)
@@ -47,7 +47,7 @@ fn parse_table_data(lines: &Vec<String>, separator: &String) -> Vec<Vec<String>>
   rows
 }
 
-fn format_minimized(rows: &Vec<Vec<String>>) -> String {
+fn format_minimized(rows: &[Vec<String>]) -> String {
   [
     rows[0].join("|"),
     vec!["---"; rows[0].len()].join("|"),
@@ -58,7 +58,7 @@ fn format_minimized(rows: &Vec<Vec<String>>) -> String {
   ].join("\n")
 }
 
-fn format_pretty(data: &Vec<Vec<String>>) -> String {
+fn format_pretty(data: &[Vec<String>]) -> String {
   let lengths = data.iter().fold(
     vec![1; data[0].len()],
     |lens, row| row.iter()
@@ -95,10 +95,12 @@ fn main() -> termination::Result {
     "Input requires at least 2 rows and 1 column."
   );
 
-  let table = match config.minimize {
-    true  => format_minimized(&data),
-    false => format_pretty(&data),
+  let table = if config.minimize {
+    format_minimized(&data)
+  } else {
+    format_pretty(&data)
   } + "\n";
+
   match config.out {
     Some(f) => fs::write(f, table).context("Error when writing output")?,
     None    => print!("{}", table),
