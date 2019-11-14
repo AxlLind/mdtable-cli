@@ -1,7 +1,3 @@
-extern crate easy_error;
-extern crate clap;
-extern crate pad;
-
 mod config;
 use config::Config;
 use pad::PadStr;

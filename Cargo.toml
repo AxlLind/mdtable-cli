@@ -9,6 +9,7 @@ homepage = "https://github.com/AxlLind/mdtable-cli"
 repository = "https://github.com/AxlLind/mdtable-cli"
 keywords = ["cli", "markdown", "table", "md"]
 categories = ["command-line-utilities", "text-processing"]
+edition = "2018"
 
 [[bin]]
 path = "src/main.rs"
